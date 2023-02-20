@@ -6,7 +6,7 @@ FFMPEG_CMD = ffmpeg
 FINAL_VIDEO_EXTENSION_1080 = 1080p.mp4
 FINAL_VIDEO_EXTENSION_720 = 720p.mp4
 FINAL_VIDEO_EXTENSION_480 = 480p.mp4
-INTERMEDIATE_VIDEO_EXTENSION = video
+INTERMEDIATE_VIDEO_EXTENSION = mp4
 SUBTITLE_FILE_EXTENSION = vtt
 
 # Options
@@ -16,6 +16,27 @@ CRF_720 = 22
 CRF_480 = 22
 PRESET_720 = slow
 PRESET_480 = slow
+
+ifeq ($(RE_ENCODE_720), YES)
+TARGET_EXTENSION = .$(FINAL_VIDEO_EXTENSION_720)
+else ifeq ($(RE_ENCODE_480), YES)
+TARGET_EXTENSION = .$(FINAL_VIDEO_EXTENSION_480)
+else
+TARGET_EXTENSION = .$(FINAL_VIDEO_EXTENSION_1080)
+endif
+
+#TARGET_EXTENSION = $(ifeq($(RE_ENCODE_720),YES),.$(FINAL_VIDEO_EXTENSION_720), $(ifeq($(RE_ENCODE_480),YES),.$(FINAL_VIDEO_EXTENSION_480),.$(FINAL_VIDEO_EXTENSION_1080)))
+
+#$(info EPISODE_TITLES is $(EPISODE_TITLES))
+$(info TARGET_EXTENSION is $(TARGET_EXTENSION))
+$(info RESULT is $(addsuffix $(TARGET_EXTENSION),$(EPISODE_TITLES)))
+$(info RE_ENCODE_720 is $(RE_ENCODE_720))
+$(info RE_ENCODE_480 is $(RE_ENCODE_480))
+
+
+# Define a rule to download all episodes
+#.PHONY: all
+all: $(addsuffix $(TARGET_EXTENSION),$(EPISODE_TITLES))
 
 # Define a rule to download an episode
 define download_episode
@@ -51,11 +72,11 @@ endef
 # Use the "foreach" function to apply "download_episode" to each episode number
 EPISODE_NUMBERS := $(shell seq 1 8)
 
+# Create the rules for each episode
 $(foreach episode,$(EPISODE_NUMBERS),$(eval $(call download_episode,$(episode),$(word $(episode),$(EPISODE_TITLES)),$(word $(episode),$(EPISODE_URLS)))))
 
-# Define a rule to download all episodes
-.PHONY: all
-all: $(addsuffix .1080p.mp4,$(EPISODE_TITLES))
+
+
 
 # Define a rule to re-encode all episodes at 720p
 .PHONY: re-encode-720
