@@ -19,6 +19,6 @@ EPISODE_TITLES = [S2E1]_Thunder \
 [S2E8]_Beyond_Mountains \
 
 # Episode format
-FORMAT = 8823+program_audio-English
+FORMAT = bestvideo+program_audio-English
 
 include ../common.mk

@@ -19,6 +19,6 @@ EPISODE_TITLES = [S1E1]_I_Have_Called_You_By_Name \
 [S1E8]_I_Am_He \
 
 # Episode format
-FORMAT = 8816+program_audio-English
+FORMAT = bestvideo+program_audio-English
 
 include ../common.mk
