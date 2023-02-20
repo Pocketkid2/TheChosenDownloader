@@ -21,4 +21,4 @@ Encoding uses `libx264` through ffmpeg. To set the quality for 720p or 480p enco
 In addition to setting the CRF, you can also set a preset that will determine the trade-off between encode quality and time spent. This is done via command line with `PRESET_720=X` and `PRESET_480=Y`. The default preset is `medium` but the available options are `ultrafast`, `superfast`, `veryfast`, `faster`, `fast`, `medium`, `slow`, `slower`, `veryslow`. According to [the ffmpeg wiki](https://trac.ffmpeg.org/wiki/Encode/H.264), there are diminishing returns for the slower presets but if you don't care about time then that may be what you want.
 
 ## Known Issues
-Season 1 and Season 2 appear to have a different download format than Season 3, as the audio and video can be downloaded separately to account for different audio languages. I will fix this as soon as I can.
+Season 1 and Season 2 appear to have a different download format than Season 3, as the audio and video can be downloaded separately to account for different audio languages. This means that the common makefile setup that currently exists does not work correctly for those two seasons. I will fix this as soon as I can.
