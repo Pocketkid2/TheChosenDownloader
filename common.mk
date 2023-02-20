@@ -40,7 +40,7 @@ $(2).$(FINAL_VIDEO_EXTENSION_1080): $(1).$(INTERMEDIATE_VIDEO_EXTENSION) $(1).*.
 
 $(1).$(INTERMEDIATE_VIDEO_EXTENSION):
 	@echo "Downloading episode $(1) video"
-	@$(YOUTUBE_DL_CMD) -o $(1).$(INTERMEDIATE_VIDEO_EXTENSION) $(3)
+	@$(YOUTUBE_DL_CMD) -f$(FORMAT) -o $(1).$(INTERMEDIATE_VIDEO_EXTENSION) $(3)
 
 $(1).*.$(SUBTITLE_FILE_EXTENSION):
 	@echo "Downloading episode $(1) subtitles"

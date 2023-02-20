@@ -18,4 +18,7 @@ EPISODE_TITLES = [S3E1]_Homecoming \
 [S3E7]_Ears_to_Hear \
 [S3E8]_Sustenance \
 
+# Episode format
+FORMAT = 8850
+
 include ../common.mk
