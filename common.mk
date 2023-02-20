@@ -45,6 +45,7 @@ ifeq ($(RE_ENCODE_720), YES)
 $(2).$(FINAL_VIDEO_EXTENSION_720): $(if $(filter $(RE_ENCODE_480), YES), $(2).$(FINAL_VIDEO_EXTENSION_480), $(2).$(FINAL_VIDEO_EXTENSION_1080))
 	@echo "Re-encoding 1080p file at 720p with CRF $(CRF_720) and preset $(PRESET_720)"
 	@$(FFMPEG_CMD) $(FFMPEG_ARGS) -i $(2).$(FINAL_VIDEO_EXTENSION_1080) $(RE_ENCODE_720_FFMPEG_ARGS) $(2).$(FINAL_VIDEO_EXTENSION_720)
+	@echo "Re-encode complete"
 
 endif
 
@@ -53,20 +54,24 @@ ifeq ($(RE_ENCODE_480), YES)
 $(2).$(FINAL_VIDEO_EXTENSION_480): $(2).$(FINAL_VIDEO_EXTENSION_1080)
 	@echo "Re-encoding 1080p file at 480p with CRF $(CRF_480) and preset $(PRESET_480)"
 	@$(FFMPEG_CMD) $(FFMPEG_ARGS) -i $(2).$(FINAL_VIDEO_EXTENSION_1080) $(RE_ENCODE_480_FFMPEG_ARGS) $(2).$(FINAL_VIDEO_EXTENSION_480)
+	@echo "Re-encode complete"
 
 endif
 
 $(2).$(FINAL_VIDEO_EXTENSION_1080): $(1).$(INTERMEDIATE_VIDEO_EXTENSION) $(1).*.$(SUBTITLE_FILE_EXTENSION)
 	@echo "Merging episode $(1) video and subtitle into mp4"
 	@$(FFMPEG_CMD) $(FFMPEG_ARGS) -i $(1).$(INTERMEDIATE_VIDEO_EXTENSION) -i $(1).*.$(SUBTITLE_FILE_EXTENSION) $(FFMPEG_MERGE_ARGS) $(2).$(FINAL_VIDEO_EXTENSION_1080)
+	@echo "Merge complete"
 
 $(1).$(INTERMEDIATE_VIDEO_EXTENSION):
 	@echo "Downloading episode $(1) video"
 	@$(YOUTUBE_DL_CMD) $(YOUTUBE_DL_ARGS) -f$(FORMAT) -o $(1).$(INTERMEDIATE_VIDEO_EXTENSION) $(3)
+	@echo "Download complete"
 
 $(1).*.$(SUBTITLE_FILE_EXTENSION):
 	@echo "Downloading episode $(1) subtitles"
 	@$(YOUTUBE_DL_CMD) $(YOUTUBE_DL_ARGS) --write-sub --skip-download -o $(1) $(3)
+	@echo "Download complete"
 
 endef
 
@@ -96,4 +101,4 @@ episode%:
 clean: clean1 clean2 clean3 clean4 clean5 clean6 clean7 clean8
 
 clean%:
-	@rm $*.*
+	@rm -f $*.*
