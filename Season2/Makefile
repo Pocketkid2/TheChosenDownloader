@@ -20,24 +20,24 @@ PRESET_720 = medium
 PRESET_480 = medium
 
 # Episode URLs
-EPISODE_URLS = https://chosendl.noxsolutions.com/thechosen/hls/episodes/s03e01-yewg652h-captions/s03e01-en-1080p.m3u8 \
-https://chosendl.noxsolutions.com/thechosen/hls/episodes/s03e02-eyag62g5-captions/s03e02_episode_eng_1080p.m3u8 \
-https://chosendl.noxsolutions.com/thechosen/hls/episodes/s03e03-fewyqw6ef-captions/s03e03_episode_eng_1080p.m3u8 \
-https://chosendl.noxsolutions.com/thechosen/hls/episodes/s03e04-fdsay7a6hw-captions/s03e04_episode_eng_1080p.m3u8 \
-https://chosendl.noxsolutions.com/thechosen/hls/episodes/s03e05-ausk126fs-captions/s03e05_episode_eng_1080p.m3u8 \
-https://chosendl.noxsolutions.com/hls/s03e06_episode_eng_1080p_sefv7jc8/s03e06_episode_eng_1080p_sefv7jc8.m3u8 \
-https://chosendl.noxsolutions.com/hls/s03e07_episode_eng_1080p_c2n42k83/s03e07_episode_eng_1080p_c2n42k83.m3u8 \
-https://chosendl.noxsolutions.com/hls/s03e08_episode_eng_1080p_gyg0jib8/s03e08_episode_eng_1080p_gyg0jib8.m3u8
+EPISODE_URLS = https://chosendl.noxsolutions.com/thechosen/hls/episodes/s02e01/s02e01-en-1080p.m3u8 \
+https://chosendl.noxsolutions.com/thechosen/hls/episodes/s02e02/s02e02-en-1080p.m3u8 \
+https://chosendl.noxsolutions.com/thechosen/hls/episodes/s02e03/s02e03-en-1080p.m3u8 \
+https://chosendl.noxsolutions.com/thechosen/hls/episodes/s02e04/s02e04-en-1080p.m3u8 \
+https://chosendl.noxsolutions.com/thechosen/hls/episodes/s02e05/s02e05-en-1080p.m3u8 \
+https://chosendl.noxsolutions.com/thechosen/hls/episodes/s02e06/s02e06-en-1080p.m3u8 \
+https://chosendl.noxsolutions.com/thechosen/hls/episodes/s02e07/s02e07-en-1080p.m3u8 \
+https://chosendl.noxsolutions.com/thechosen/hls/episodes/s02e08/s02e08-en-1080p.m3u8
 
 # Episode titles
-EPISODE_TITLES = [S3E1]_Homecoming \
-[S3E2]_Two_by_Two \
-[S3E3]_Physician_Heal_Thyself \
-[S3E4]_Clean_Part_1 \
-[S3E5]_Clean_Part_2 \
-[S3E6]_Intensity_in_Tent_City \
-[S3E7]_Ears_to_Hear \
-[S3E8]_Sustenance \
+EPISODE_TITLES = [S2E1]_Thunder \
+[S2E2]_I_Saw_You \
+[S2E3]_Matthew_4_24 \
+[S2E4]_The_Perfect_Opportunity \
+[S2E5]_Spirit \
+[S2E6]_Unlawful \
+[S2E7]_Reckoning \
+[S2E8]_Beyond_Mountains \
 
 # Define a rule to download an episode
 define download_episode
