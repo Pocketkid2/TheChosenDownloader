@@ -33,9 +33,12 @@ else
 TARGET_EXTENSION = .$(FINAL_VIDEO_EXTENSION_1080)
 endif
 
+# Use the "foreach" function to apply "download_episode" to each episode number
+EPISODE_NUMBERS := $(shell seq 1 8)
+
 # Define a rule to download all episodes
 .PHONY: all
-all: $(addsuffix $(TARGET_EXTENSION),$(EPISODE_TITLES))
+all: $(addsuffix $(TARGET_EXTENSION),$(foreach episode,$(EPISODE_NUMBERS),$(word $(episode),$(EPISODE_TITLES))))
 
 # Define a function to generate a rule to download an episode
 define download_episode
@@ -74,9 +77,6 @@ $(1).*.$(SUBTITLE_FILE_EXTENSION):
 	@echo "Download complete"
 
 endef
-
-# Use the "foreach" function to apply "download_episode" to each episode number
-EPISODE_NUMBERS := $(shell seq 1 8)
 
 # Create the rules for each episode
 $(foreach episode,$(EPISODE_NUMBERS),$(eval $(call download_episode,$(episode),$(word $(episode),$(EPISODE_TITLES)),$(word $(episode),$(EPISODE_URLS)))))
