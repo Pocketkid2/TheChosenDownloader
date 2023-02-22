@@ -19,6 +19,6 @@ EPISODE_TITLES = [S3E1]_Homecoming \
 [S3E8]_Sustenance \
 
 # Episode format
-FORMAT = 8850
+FORMAT = bestvideo*
 
 include ../common.mk
