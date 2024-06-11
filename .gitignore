@@ -1,5 +1,4 @@
-# Ignore MP4 video files
+# Ignore media files
 *.mp4
-
-# Ignore subtitle files
+*.aac
 *.vtt
