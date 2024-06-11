@@ -2,3 +2,7 @@
 *.mp4
 *.aac
 *.vtt
+
+# Ignore other temp files
+*.db
+*.m3u8
