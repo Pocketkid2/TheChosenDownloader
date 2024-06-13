@@ -95,16 +95,22 @@ def filter_video_for_full_episodes(video):
 
 full_episodes = sorted(filter(filter_video_for_full_episodes, videos), key=lambda video: video['node']['title'])
 
+# Initialize the counter for independent videos
+independent_video_episode = 1
+
 for i, video in enumerate(full_episodes):
-    url = video['node']['url'] or f"https://api.frontrow.cc/channels/12884901895/VIDEO/{video['node']['id']}/hls.m3u8"
-    match = re.search(r'S([0-9]+) E([0-9]+)', video['node']['title'])
-    if match is not None:
-        season, episode = map(int, match.groups())
-        title = re.sub(r'S([0-9]+) E([0-9]+): ', '', video['node']['title'])
-    else:
-        season, episode = 0, 0
-        title = video['node']['title']
-    parse_m3u8(url, season, episode, title)
+  url = video['node']['url'] or f"https://api.frontrow.cc/channels/12884901895/VIDEO/{video['node']['id']}/hls.m3u8"
+  match = re.search(r'S([0-9]+) E([0-9]+)', video['node']['title'])
+  if match is not None:
+    season, episode = map(int, match.groups())
+    title = re.sub(r'S([0-9]+) E([0-9]+): ', '', video['node']['title'])
+  else:
+    # If the video is independent, assign it the next episode number
+    season, episode = 0, independent_video_episode
+    title = video['node']['title']
+    # Increment the counter for the next independent video
+    independent_video_episode += 1
+  parse_m3u8(url, season, episode, title)
 
 # Commit the changes and close the connection
 conn.commit()
