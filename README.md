@@ -17,13 +17,9 @@ This repository contains a Python script designed to scrape video data from The 
     - [Usage](#usage-1)
     - [Output](#output-2)
     - [Example Output](#example-output-1)
-- [`download_stage1.py`](#download_stage1py)
-    - [How it works](#how-it-works-1)
-    - [Command Line Arguments](#command-line-arguments)
-- [`download_stage2.py`](#download_stage2py)
-    - [How it works](#how-it-works-2)
-    - [Command Line Arguments](#command-line-arguments-1)
-- [Examples](#examples)
+- [`download.py`](#downloadpy)
+    - [Usage](#usage-2)
+    - [Examples](#examples)
 
 ## `scrape.py`
 This script is used to scrape video stream links from The Chosen's GraphQL API, parse the data, and store it in a SQLite database. It's written in Python and requires the additional Python libraries `requests` and `m3u8`.
@@ -135,84 +131,45 @@ French                           (fr)
 ...
 ```
 
-## `download_stage1.py`
+## `download.py`
 
-This Python script is used to query the SQLite database `chosen_links.db` and generate a results table based on the provided command line arguments. It's important to note that this script does not download any content; it only helps the user understand their query by presenting the results in a table format.
+This script does the actual download work by querying the SQLite database file for the links you want, downloading the streams, merging them into MP4s, and labelling them. 
 
-### How it works
+### Usage
 
-The script starts by parsing command line arguments for season number, episode number, audio language, subtitle language, and video quality. These arguments are used to filter the results.
+The script accepts the following command-line arguments:
 
-It then connects to the SQLite database `chosen_links.db` and constructs a SQL query based on the provided arguments. The query selects video, audio, and subtitle URLs from the `links` table, joining on season and episode number.
+`-s` or `--season`: This argument filters the media files by the season number. For example, `-s 2` will only download files from season 2.
 
-The script then executes the query and prints the results in a table format using the `prettytable` library.
+`-e` or `--episode`: This argument filters the media files by the episode number. For example, `-e 3` will only download files marked episode 3.
 
-Finally, it closes the connection to the database.
+`-al` or `--audio_language`: This argument filters the media files by the audio language. This argument is required. For example, `-al en` will only download files with English audio.
 
-### Command Line Arguments
+`-sl` or `--subtitle_language`: This argument filters the media files by the subtitle language. This argument is required. For example, `-sl es` will only download files with Spanish subtitles.
 
-- `--season`: An integer representing the season number to filter by.
-- `--episode`: An integer representing the episode number to filter by.
-- `--audio_language`: A string representing the audio language code to filter by. This argument is required.
-- `--subtitle_language`: A string representing the subtitle language code to filter by. This argument is required.
-- `--video_quality`: A string representing the video quality to filter by. This argument is required. It can be 'min', 'max', or a custom resolution (e.g., '720p').
+`-vq` or `--video_quality`: This argument filters the media files by the video quality. This argument is required and can be 'min', 'max', or a specific resolution like '720p'. For example, `-vq max` will download the highest quality video files.
 
-The `--season` and `--episode` arguments are optional. If they are not provided, the script will return results for all seasons and episodes.
+`-n` or `--dry-run`: If this argument is provided, the script will print the results without downloading the files. This is helpful as it allows you to test the arguments you provided, to make sure you will be getting the videos and tracks you want.
 
-The `--audio_language`, `--subtitle_language`, and `--video_quality` arguments are required. The script will return results that match the provided audio language, subtitle language, and video quality. See `list_languages.py` script for details on finding available language codes.
+### Examples
+Here are some examples of how to use the script:
 
-The results are sorted by season and episode number.
+To download all media files with English audio, Spanish subtitles, and maximum video quality:
 
-## `download_stage2.py`
+```bash
+python download.py -al en -sl es -vq max
+```
 
-This Python script is an extension of `download_stage1.py`. It not only queries the SQLite database `chosen_links.db` and generates a results table based on the provided command line arguments, but also downloads the streams as temporary files, merges them, and labels them accordingly.
+To download media files from season 2, episode 3, with French audio, German subtitles, and 720p video quality:
 
-### How it works
+```bash
+python download.py -s 2 -e 3 -al fr -sl de -vq 720p
+```
 
-After parsing the command line arguments and executing the SQL query (as in `download_stage1.py`), this script iterates over each row of the results. For each row, it:
+To print the results without downloading the files:
 
-1. Creates a directory for the season (if it doesn't already exist).
-2. Prepares the output file names for the video, audio, and subtitles.
-3. Downloads the video, audio, and subtitles using `ffmpeg`.
-4. Merges the downloaded files into a single MP4 file, also using `ffmpeg`. The output file is named according to the season, episode, and title.
-5. Deletes the temporary files.
+```bash
+python download.py -al en -sl es -vq max -n
+```
 
-The script then closes the connection to the database and prints the total execution time.
-
-### Command Line Arguments
-
-The command line arguments are the same as in `download_stage1.py`:
-
-- `--season`: An integer representing the season number to filter by.
-- `--episode`: An integer representing the episode number to filter by.
-- `--audio_language`: A string representing the audio language to filter by. This argument is required.
-- `--subtitle_language`: A string representing the subtitle language to filter by. This argument is required.
-- `--video_quality`: A string representing the video quality to filter by. This argument is required. It can be 'min', 'max', or a custom resolution (e.g., '720p').
-
-The `--season` and `--episode` arguments are optional. If they are not provided, the script will return results for all seasons and episodes.
-
-The `--audio_language`, `--subtitle_language`, and `--video_quality` arguments are required. The script will return results that match the provided audio language, subtitle language, and video quality. See `list_languages.py` script for details on finding available language codes.
-
-The results are sorted by season and episode number.
-
-## Examples
-
-Here are some examples of how to use the scripts:
-
-1. To scrape the video data and store it in a SQLite database, simply run the `scrape.py` script:
-
-    ```bash
-    python3 scrape.py
-    ```
-
-2. To query the database and generate a results table, run the `download_stage1.py` script with the desired command line arguments. For example, to get the download link table for Season 4 with English audio, English subtitles, and maximum video quality:
-
-    ```bash
-    python3 download_stage1.py --season 4 --audio_language en --subtitle_language en --video_quality max
-    ```
-
-3. To download the streams, merge them, and label them, run the `download_stage2.py` script with the same command line arguments as `download_stage1.py`. For example:
-
-    ```bash
-    python3 download_stage2.py --season 4 --audio_language en --subtitle_language en --video_quality max
-    ```
+Please note that the script uses `ffmpeg` to download and merge the media files, so you need to have `ffmpeg` installed on your system to use this script.
