@@ -3,6 +3,10 @@ from prettytable import from_db_cursor
 import argparse
 import os
 import subprocess
+import time
+
+# Start the timer
+start_time = time.time()
 
 # Create an argument parser
 parser = argparse.ArgumentParser(description='Filter rows by season, episode, language, and resolution.')
@@ -103,14 +107,12 @@ for row in rows:
         ffmpeg_command.extend(["-i", output_subs])
 
     # Add the map arguments to copy all video and audio tracks
-    if video_url is not None:
-        ffmpeg_command.extend(["-map", "0"])
-    if audio_url is not None:
-        ffmpeg_command.extend(["-map", "1"])
+    if video_url is not None or audio_url is not None:
+        ffmpeg_command.extend(["-c:v", "copy", "-c:a", "copy"])
 
     # Add the codec arguments to convert the subtitles format to mov_text
     if subtitles_url is not None:
-        ffmpeg_command.extend(["-scodec", "mov_text", "-map", "2"])
+        ffmpeg_command.extend(["-c:s", "mov_text"])
 
     # Prepare the output file name
     if season == 0:
@@ -128,5 +130,17 @@ for row in rows:
     # Run the ffmpeg command to merge the files
     subprocess.run(ffmpeg_command)
 
+    # Delete the temporary files
+    if video_url is not None:
+        os.remove(output_video)
+    if audio_url is not None:
+        os.remove(output_audio)
+    if subtitles_url is not None:
+        os.remove(output_subs)
+
 # Close the connection
 conn.close()
+
+# Print the time taken to execute the script
+end_time = time.time()
+print(f"Execution time: {end_time - start_time:.2f} seconds")
