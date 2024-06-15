@@ -74,6 +74,11 @@ cur.execute(query, (args.audio_language, args.subtitle_language))
 # Fetch all rows
 rows = cur.fetchall()
 
+# Check if any rows were returned
+if not rows:
+    print("Warning: Your query returned zero results. Please check your season number, episode number, or resolution.")
+    exit(1)  # Exit the script
+
 # Iterate over each row
 for row in rows:
     season, episode, title, video_url, audio_url, subtitles_url = row
