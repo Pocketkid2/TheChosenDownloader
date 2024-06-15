@@ -139,15 +139,15 @@ This script does the actual download work by querying the SQLite database file f
 
 The script accepts the following command-line arguments:
 
-`-s` or `--season`: This argument filters the media files by the season number. For example, `-s 2` will only download files from season 2.
+`-s` or `--season`: This argument filters the media files by the season number. By default, the script downloads videos for all seasons (including "season 0") unless this argument is specified. For example, `-s 2` will only download files from season 2.
 
-`-e` or `--episode`: This argument filters the media files by the episode number. For example, `-e 3` will only download files marked episode 3.
+`-e` or `--episode`: This argument filters the media files by the episode number. By default, the script downloads videos for all episodes unless this argument is specified. For example, `-e 3` will only download files marked episode 3.
 
-`-al` or `--audio_language`: This argument filters the media files by the audio language. This argument is required. For example, `-al en` will only download files with English audio.
+`-al` or `--audio_language`: This argument filters the media files by the audio language. By default, the OS language is used, unless this argument is specified. For example, `-al en` will download English audio.
 
-`-sl` or `--subtitle_language`: This argument filters the media files by the subtitle language. This argument is required. For example, `-sl es` will only download files with Spanish subtitles.
+`-sl` or `--subtitle_language`: This argument filters the media files by the subtitle language. By default, the OS language is used, unless this argument is specified. For example, `-sl es` will download Spanish subtitles.
 
-`-vq` or `--video_quality`: This argument filters the media files by the video quality. This argument is required and can be 'min', 'max', or a specific resolution like '720p'. For example, `-vq max` will download the highest quality video files.
+`-vq` or `--video_quality`: This argument filters the media files by the video quality. This argument defaults to `max` but can be specified as `min` or a custom resolution. For example, `-vq 720p` will download the 720p video streams. Not all videos support all resolutions, so you'll want to test this beforehand with the dry run flag before downloading.
 
 `-n` or `--dry-run`: If this argument is provided, the script will print the results without downloading the files. This is helpful as it allows you to test the arguments you provided, to make sure you will be getting the videos and tracks you want.
 
