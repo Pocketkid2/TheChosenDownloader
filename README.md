@@ -6,15 +6,24 @@ This repository contains a Python script designed to scrape video data from The 
 
 ## Table of Contents
 
-- [scrape.py](#scrapepy)
+- [`scrape.py`](#scrapepy)
     - [How it works](#how-it-works)
     - [Output](#output)
-- [download_stage1.py](#download_stage1py)
+- [`view_db.py`](#view_dbpy)
+    - [Usage](#usage)
+    - [Output](#output-1)
+    - [Example Output](#example-output)
+- [`list_languages.py`](#list_languagespy)
+    - [Usage](#usage-1)
+    - [Output](#output-2)
+    - [Example Output](#example-output-1)
+- [`download_stage1.py`](#download_stage1py)
     - [How it works](#how-it-works-1)
     - [Command Line Arguments](#command-line-arguments)
-- [download_stage2.py](#download_stage2py)
+- [`download_stage2.py`](#download_stage2py)
     - [How it works](#how-it-works-2)
     - [Command Line Arguments](#command-line-arguments-1)
+- [Examples](#examples)
 
 ## `scrape.py`
 This script is used to scrape video stream links from The Chosen's GraphQL API, parse the data, and store it in a SQLite database. It's written in Python and requires the additional Python libraries `requests` and `m3u8`.
