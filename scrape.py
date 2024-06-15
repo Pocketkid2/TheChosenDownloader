@@ -2,7 +2,11 @@
 import requests
 import sqlite3
 import m3u8
+import time
 import re
+
+# Start the timer
+start_time = time.time()
 
 # Connect to the SQLite database
 conn = sqlite3.connect('chosen_links.db')
@@ -115,3 +119,7 @@ for i, video in enumerate(full_episodes):
 # Commit the changes and close the connection
 conn.commit()
 conn.close()
+
+# End the timer and print the total runtime
+end_time = time.time()
+print(f"Execution time: {round(end_time - start_time, 3)} seconds")
