@@ -10,11 +10,13 @@ start_time = time.time()
 
 # Create an argument parser
 parser = argparse.ArgumentParser(description='Filter rows by season, episode, language, and resolution.')
-parser.add_argument('--season', type=int, help='Season number to filter by')
-parser.add_argument('--episode', type=int, help='Episode number to filter by')
-parser.add_argument('--audio_language', type=str, help='Audio language to filter by', required=True)
-parser.add_argument('--subtitle_language', type=str, help='Subtitle language to filter by', required=True)
-parser.add_argument('--video_quality', type=str, help='Video quality to filter by', required=True)
+parser.add_argument('-s', '--season', type=int, help='Season number to filter by')
+parser.add_argument('-e', '--episode', type=int, help='Episode number to filter by')
+parser.add_argument('-al', '--audio_language', type=str, help='Audio language to filter by', required=True)
+parser.add_argument('-sl', '--subtitle_language', type=str, help='Subtitle language to filter by', required=True)
+parser.add_argument('-vq', '--video_quality', type=str, help='Video quality to filter by', required=True)
+parser.add_argument('-n', '--dry-run', action='store_true', help='Print the results without downloading the files')
+
 
 # Parse the arguments
 args = parser.parse_args()
@@ -70,6 +72,12 @@ query += " ORDER BY video.season, video.episode"
 
 # Execute the query
 cur.execute(query, (args.audio_language, args.subtitle_language))
+
+# If dry-run is enabled, print the results and exit
+if args.dry_run:
+    table = from_db_cursor(cur)
+    print(table)
+    exit(0)  # Exit the script
 
 # Fetch all rows
 rows = cur.fetchall()
