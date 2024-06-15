@@ -16,7 +16,7 @@ This repository contains a Python script designed to scrape video data from The 
     - [How it works](#how-it-works-2)
     - [Command Line Arguments](#command-line-arguments-1)
 
-## scrape.py
+## `scrape.py`
 This script is used to scrape video stream links from The Chosen's GraphQL API, parse the data, and store it in a SQLite database. It's written in Python and requires the additional Python libraries `requests` and `m3u8`.
 
 ### How it works
@@ -44,7 +44,49 @@ The output of this script is a SQLite database named `chosen_links.db` that cont
 - `resolution`: The resolution of the video (if applicable).
 - `bandwidth`: The bandwidth of the video (if applicable).
 
-## download_stage1.py
+## `list_languages.py`
+
+This Python script is used to list all available audio and subtitle languages from the SQLite database containing the scraped links. The options vary from season to season, and episode to episode, so you may want to filter by season or episode to make sure you get the correct information.
+
+### Usage 
+
+You can run the script from the command line with optional arguments for the season and episode number:
+
+```bash
+python3 list_languages.py --season <season_number> --episode <episode_number>
+```
+
+Both `--season` and `--episode` are optional arguments. If you don't provide a season number, the script will list languages for all seasons. Similarly, if you don't provide an episode number, the script will list languages for all episodes.
+
+### Output
+
+The script outputs two lists:
+
+**Audio Languages**: This list contains all distinct audio languages for the specified season and episode. The languages are sorted by their language code. Each line of the list contains the display name of the language and its language code.
+
+**Subtitle Languages**: This list contains all distinct subtitle languages for the specified season and episode. The languages are sorted by their language code. Each line of the list contains the display name of the language and its language code.
+
+The count of languages in each list is also displayed.
+
+### Example Output
+In this example, the script found 19 audio languages and 25 subtitle languages. The languages are displayed with their display name and language code. ```
+```bash
+Audio Languages (Count: 19):
+----------------------------------------
+English                          (en)
+Spanish                          (es)
+French                           (fr)
+...
+
+Subtitle Languages (Count: 25):
+----------------------------------------
+English                          (en)
+Spanish                          (es)
+French                           (fr)
+...
+```
+
+## `download_stage1.py`
 
 This Python script is used to query the SQLite database `chosen_links.db` and generate a results table based on the provided command line arguments. It's important to note that this script does not download any content; it only helps the user understand their query by presenting the results in a table format.
 
@@ -62,17 +104,17 @@ Finally, it closes the connection to the database.
 
 - `--season`: An integer representing the season number to filter by.
 - `--episode`: An integer representing the episode number to filter by.
-- `--audio_language`: A string representing the audio language to filter by. This argument is required.
-- `--subtitle_language`: A string representing the subtitle language to filter by. This argument is required.
+- `--audio_language`: A string representing the audio language code to filter by. This argument is required.
+- `--subtitle_language`: A string representing the subtitle language code to filter by. This argument is required.
 - `--video_quality`: A string representing the video quality to filter by. This argument is required. It can be 'min', 'max', or a custom resolution (e.g., '720p').
 
 The `--season` and `--episode` arguments are optional. If they are not provided, the script will return results for all seasons and episodes.
 
-The `--audio_language`, `--subtitle_language`, and `--video_quality` arguments are required. The script will return results that match the provided audio language, subtitle language, and video quality.
+The `--audio_language`, `--subtitle_language`, and `--video_quality` arguments are required. The script will return results that match the provided audio language, subtitle language, and video quality. See `list_languages.py` script for details on finding available language codes.
 
 The results are sorted by season and episode number.
 
-## download_stage2.py
+## `download_stage2.py`
 
 This Python script is an extension of `download_stage1.py`. It not only queries the SQLite database `chosen_links.db` and generates a results table based on the provided command line arguments, but also downloads the streams as temporary files, merges them, and labels them accordingly.
 
@@ -100,7 +142,7 @@ The command line arguments are the same as in `download_stage1.py`:
 
 The `--season` and `--episode` arguments are optional. If they are not provided, the script will return results for all seasons and episodes.
 
-The `--audio_language`, `--subtitle_language`, and `--video_quality` arguments are required. The script will return results that match the provided audio language, subtitle language, and video quality.
+The `--audio_language`, `--subtitle_language`, and `--video_quality` arguments are required. The script will return results that match the provided audio language, subtitle language, and video quality. See `list_languages.py` script for details on finding available language codes.
 
 The results are sorted by season and episode number.
 
