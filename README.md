@@ -15,7 +15,6 @@ This repository contains a Python script designed to scrape video data from The 
 - [download_stage2.py](#download_stage2py)
     - [How it works](#how-it-works-2)
     - [Command Line Arguments](#command-line-arguments-1)
-    - [New Features](#new-features)
 
 ## scrape.py
 This script is used to scrape video stream links from The Chosen's GraphQL API, parse the data, and store it in a SQLite database. It's written in Python and requires the additional Python libraries `requests` and `m3u8`.
@@ -104,12 +103,3 @@ The `--season` and `--episode` arguments are optional. If they are not provided,
 The `--audio_language`, `--subtitle_language`, and `--video_quality` arguments are required. The script will return results that match the provided audio language, subtitle language, and video quality.
 
 The results are sorted by season and episode number.
-
-### New Features
-
-Compared to `download_stage1.py`, this script adds the following features:
-
-- It downloads the video, audio, and subtitles for each episode.
-- It merges the downloaded files into a single MP4 file using `ffmpeg`.
-- It names the output file according to the season, episode, and title.
-- It creates a directory for each season and places the output files in the appropriate directory.
