@@ -4,17 +4,28 @@ import argparse
 import os
 import subprocess
 import time
+import locale
 
 # Start the timer
 start_time = time.time()
+
+# Get the system's default language
+try:
+    default_language = locale.getdefaultlocale()[0]
+    if default_language is not None:
+        default_language = default_language.split('_')[0]  # e.g., 'en' for English
+    else:
+        default_language = 'en'  # Default to English if the system's default locale cannot be determined
+except ValueError:
+    default_language = 'en'  # Default to English if an error occurs
 
 # Create an argument parser
 parser = argparse.ArgumentParser(description='Filter rows by season, episode, language, and resolution.')
 parser.add_argument('-s', '--season', type=int, help='Season number to filter by')
 parser.add_argument('-e', '--episode', type=int, help='Episode number to filter by')
-parser.add_argument('-al', '--audio_language', type=str, help='Audio language to filter by', required=True)
-parser.add_argument('-sl', '--subtitle_language', type=str, help='Subtitle language to filter by', required=True)
-parser.add_argument('-vq', '--video_quality', type=str, help='Video quality to filter by', required=True)
+parser.add_argument('-al', '--audio_language', type=str, default=default_language, help='Audio language to filter by')
+parser.add_argument('-sl', '--subtitle_language', type=str, default=default_language, help='Subtitle language to filter by')
+parser.add_argument('-vq', '--video_quality', type=str, default='max', help='Video quality to filter by')
 parser.add_argument('-n', '--dry-run', action='store_true', help='Print the results without downloading the files')
 
 
