@@ -103,3 +103,25 @@ The `--season` and `--episode` arguments are optional. If they are not provided,
 The `--audio_language`, `--subtitle_language`, and `--video_quality` arguments are required. The script will return results that match the provided audio language, subtitle language, and video quality.
 
 The results are sorted by season and episode number.
+
+## Examples
+
+Here are some examples of how to use the scripts:
+
+1. To scrape the video data and store it in a SQLite database, simply run the `scrape.py` script:
+
+    ```bash
+    python3 scrape.py
+    ```
+
+2. To query the database and generate a results table, run the `download_stage1.py` script with the desired command line arguments. For example, to get the download link table for Season 4 with English audio, English subtitles, and maximum video quality:
+
+    ```bash
+    python3 download_stage1.py --season 4 --audio_language en --subtitle_language en --video_quality max
+    ```
+
+3. To download the streams, merge them, and label them, run the `download_stage2.py` script with the same command line arguments as `download_stage1.py`. For example:
+
+    ```bash
+    python3 download_stage2.py --season 4 --audio_language en --subtitle_language en --video_quality max
+    ```
