@@ -44,6 +44,46 @@ The output of this script is a SQLite database named `chosen_links.db` that cont
 - `resolution`: The resolution of the video (if applicable).
 - `bandwidth`: The bandwidth of the video (if applicable).
 
+## `view_db.py`
+
+This python script simply lists rows in the SQLite database containing the scraped links, with some optional filters. It's essentially a simplified Python wrapper for sqlite3. It helps you understand what's in the database.
+
+### Usage
+
+Run the script from the command line with optional arguments:
+
+```bash
+python3 view_db.py --season <season_number> --episode <episode_number> --language <language_code> --resolution <resolution> --type <type>
+```
+
+All arguments are optional. If provided, they filter the output:
+
+* `--season`: Filter by season number
+* `--episode`: Filter by episode number
+* `--language`: Filter by language code
+* `--resolution`: Filter by resolution
+* `--type`: Filter by type of link/resource
+
+### Output
+
+The script outputs a table of rows from the database that match the specified filters. If no filters are specified, it displays all rows.
+
+### Example Output
+
+```bash
++-----+--------+---------+-------------------------------+-----------+----------+------------+-----------+-------------------+
+| url | season | episode |             title             |    type   | language | resolution | bandwidth | average_bandwidth |
++--------------+---------+-------------------------------+-----------+----------+------------+-----------+-------------------+
+| ... |   1    |    4    | The Rock On Which It Is Built |   audio   |    en    |    None    |    None   |        None       |
+| ... |   1    |    4    | The Rock On Which It Is Built |   video   |   None   |   1080p    |  16970132 |      5056517      |
+...
++-----+--------+---------+-------------------------------+-----------+----------+------------+-----------+-------------------+
+```
+
+In this example, the script displays rows with season 1, episode 1, language 'en', resolution '1080p', and type 'audio', and season 1, episode 2, language 'es', resolution '720p', and type 'subtitles'.
+
+
+
 ## `list_languages.py`
 
 This Python script is used to list all available audio and subtitle languages from the SQLite database containing the scraped links. The options vary from season to season, and episode to episode, so you may want to filter by season or episode to make sure you get the correct information.
