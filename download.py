@@ -9,6 +9,13 @@ import locale
 # Start the timer
 start_time = time.time()
 
+def human_readable_size(size, decimal_places=2):
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size < 1024.0:
+            break
+        size /= 1024.0
+    return f"{size:.{decimal_places}f}{unit}"
+
 # Get the system's default language
 try:
     default_language = locale.getdefaultlocale()[0]
@@ -45,12 +52,12 @@ query = """
         video.episode, 
         video.title,
         video.duration,
-        video.average_bandwidth,
+        video.bandwidth,
         video.url AS video_url, 
         audio.url AS audio_url, 
         subtitles.url AS subtitles_url
     FROM 
-        (SELECT season, episode, duration, average_bandwidth, title, url FROM links WHERE type = 'video' AND {quality_condition}) AS video
+        (SELECT season, episode, duration, bandwidth, title, url FROM links WHERE type = 'video' AND {quality_condition}) AS video
     LEFT JOIN 
         (SELECT season, episode, url FROM links WHERE type = 'audio' AND language = ?) AS audio
     ON 
@@ -86,14 +93,20 @@ query += " ORDER BY video.season, video.episode"
 # Execute the query
 cur.execute(query, (args.audio_language, args.subtitle_language))
 
+rows = cur.fetchall()
+
 # If dry-run is enabled, print the results and exit
 if args.dry_run:
+    total_max_file_size = 0
+    for row in rows:
+        season, episode, title, duration, bandwidth, video_url, audio_url, subtitles_url = row
+        max_file_size = duration * bandwidth / 20
+        total_max_file_size += max_file_size
+    cur.execute(query, (args.audio_language, args.subtitle_language))
     table = from_db_cursor(cur)
     print(table)
+    print(f"For this download you will need no more than {human_readable_size(total_max_file_size)} storage space")
     exit(0)  # Exit the script
-
-# Fetch all rows
-rows = cur.fetchall()
 
 # Check if any rows were returned
 if not rows:
@@ -102,7 +115,7 @@ if not rows:
 
 # Iterate over each row
 for row in rows:
-    season, episode, title, duration, average_bandwidth, video_url, audio_url, subtitles_url = row
+    season, episode, title, duration, bandwidth, video_url, audio_url, subtitles_url = row
 
     # Create a directory for the season if it doesn't exist
     if args.season is None and season != 0:
