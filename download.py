@@ -44,11 +44,13 @@ query = """
         video.season, 
         video.episode, 
         video.title,
+        video.duration,
+        video.average_bandwidth,
         video.url AS video_url, 
         audio.url AS audio_url, 
         subtitles.url AS subtitles_url
     FROM 
-        (SELECT season, episode, title, url FROM links WHERE type = 'video' AND {quality_condition}) AS video
+        (SELECT season, episode, duration, average_bandwidth, title, url FROM links WHERE type = 'video' AND {quality_condition}) AS video
     LEFT JOIN 
         (SELECT season, episode, url FROM links WHERE type = 'audio' AND language = ?) AS audio
     ON 
@@ -100,7 +102,7 @@ if not rows:
 
 # Iterate over each row
 for row in rows:
-    season, episode, title, video_url, audio_url, subtitles_url = row
+    season, episode, title, duration, average_bandwidth, video_url, audio_url, subtitles_url = row
 
     # Create a directory for the season if it doesn't exist
     if args.season is None and season != 0:
