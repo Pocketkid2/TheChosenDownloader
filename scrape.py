@@ -18,6 +18,7 @@ c.execute('''
         url text PRIMARY KEY,
         season integer NOT NULL,
         episode integer NOT NULL,
+        duration integer NOT NULL,
         title text NOT NULL,
         type text NOT NULL,
         language text,
@@ -27,15 +28,16 @@ c.execute('''
     )
 ''')
 
-def parse_m3u8(url, season, episode, title):
+def parse_m3u8(url, season, episode, duration, title):
     m3u8_obj = m3u8.load(url)
 
     # Parse media URLs
     for media in m3u8_obj.media:
-        c.execute("INSERT INTO links VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+        c.execute("INSERT OR IGNORE INTO links VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
             media.uri,
             season,
             episode,
+            duration,
             title,
             media.type.lower(),
             media.language,
@@ -46,10 +48,11 @@ def parse_m3u8(url, season, episode, title):
 
     # Parse playlists
     for playlist in m3u8_obj.playlists:
-        c.execute("INSERT INTO links VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+        c.execute("INSERT OR IGNORE INTO links VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
             playlist.uri,
             season,
             episode,
+            duration,
             title,
             'video',
             None,
@@ -70,6 +73,7 @@ query Videos($ChannelID: ID!, $OrderByField: VideoOrderField!, $OrderByDirection
           id
           title
           description
+          duration
           url
           tags {
             edges {
@@ -114,7 +118,7 @@ for i, video in enumerate(full_episodes):
     title = video['node']['title']
     # Increment the counter for the next independent video
     independent_video_episode += 1
-  parse_m3u8(url, season, episode, title)
+  parse_m3u8(url, season, episode, video['node']['duration'], title)
 
 # Commit the changes and close the connection
 conn.commit()
