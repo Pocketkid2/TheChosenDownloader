@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import urllib.error
+import argparse
 import requests
 import sqlite3
 import m3u8
@@ -9,6 +10,11 @@ import os
 
 # Start the timer
 start_time = time.time()
+
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--viewer_token', type=str, help='Optional viewer token', default=None)
+args = parser.parse_args()
 
 # Database file path
 db_path = 'chosen_links.db'
@@ -42,8 +48,18 @@ def parse_m3u8(url, season, episode, duration, title):
     try:
         m3u8_obj = m3u8.load(url)
     except urllib.error.HTTPError as e:
-        print(f"Failed to load URL {url}: HTTP Error {e.code} {e.reason}")
-        return  # Early return to skip processing this URL
+        if e.code == 500 and args.viewer_token:
+            # Retry with viewer_token if available
+            tokenized_url = f"{url}?viewerToken={args.viewer_token}"
+            print(f"Retrying with viewer token: {tokenized_url}")
+            try:
+                m3u8_obj = m3u8.load(tokenized_url)
+            except urllib.error.HTTPError as e_retry:
+                print(f"Failed to load URL {tokenized_url}: HTTP Error {e_retry.code} {e_retry.reason}")
+                return  # Early return to skip processing this URL
+        else:
+            print(f"Failed to load URL {url}: HTTP Error {e.code} {e.reason}")
+            return  # Early return to skip processing this URL
 
     # Parse media URLs
     for media in m3u8_obj.media:
