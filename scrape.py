@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
+import urllib.error
 import requests
 import sqlite3
 import m3u8
 import time
 import re
+import os
 
 # Start the timer
 start_time = time.time()
 
-# Connect to the SQLite database
-conn = sqlite3.connect('chosen_links.db')
+# Database file path
+db_path = 'chosen_links.db'
+
+# Check if the database exists and delete it
+if os.path.exists(db_path):
+    os.remove(db_path)
+
+# Connect to the SQLite database (this will create a new database if it doesn't exist)
+conn = sqlite3.connect(db_path)
 c = conn.cursor()
 
 # Create table
@@ -29,7 +38,12 @@ c.execute('''
 ''')
 
 def parse_m3u8(url, season, episode, duration, title):
-    m3u8_obj = m3u8.load(url)
+    print("Loading URL " + url + " for season " + str(season) + " episode " + str(episode) + "...")
+    try:
+        m3u8_obj = m3u8.load(url)
+    except urllib.error.HTTPError as e:
+        print(f"Failed to load URL {url}: HTTP Error {e.code} {e.reason}")
+        return  # Early return to skip processing this URL
 
     # Parse media URLs
     for media in m3u8_obj.media:
@@ -107,11 +121,12 @@ full_episodes = sorted(filter(filter_video_for_full_episodes, videos), key=lambd
 independent_video_episode = 1
 
 for i, video in enumerate(full_episodes):
+  #print(f"GraphQL response: ID({video['node']['id']}) TITLE({video['node']['title']}) URL({video['node']['url']}) OBJ({video})")
   url = video['node']['url'] or f"https://api.frontrow.cc/channels/12884901895/VIDEO/{video['node']['id']}/hls.m3u8"
-  match = re.search(r'S([0-9]+) E([0-9]+)', video['node']['title'])
+  match = re.search(r'Season ([0-9]+) Episode ([0-9]+)', video['node']['title'])
   if match is not None:
     season, episode = map(int, match.groups())
-    title = re.sub(r'S([0-9]+) E([0-9]+): ', '', video['node']['title'])
+    title = re.sub(r'Season ([0-9]+) Episode ([0-9]+): ', '', video['node']['title'])
   else:
     # If the video is independent, assign it the next episode number
     season, episode = 0, independent_video_episode
