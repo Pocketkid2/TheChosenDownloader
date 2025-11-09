@@ -122,7 +122,7 @@ for row in rows:
         os.makedirs(f"Season {season}", exist_ok=True)
 
     # Prepare the output file names
-    output_video = "output_video.mp4"
+    output_video = "output_video.mkv"
     output_audio = "output_audio.aac"
     output_subs = "output_subs.vtt"
 
@@ -155,9 +155,9 @@ for row in rows:
 
     # Prepare the output file name
     if season == 0:
-        output_file = f"{title}.mp4"
+        output_file = f"{title}.mkv"
     else:
-        output_file = f"[S{season} E{episode}] {title}.mp4"
+        output_file = f"[S{season} E{episode}] {title}.mkv"
 
     # If the user did not specify a season, put the output file in the season directory
     if args.season is None and season != 0:
