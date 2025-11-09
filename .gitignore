@@ -6,3 +6,6 @@
 # Ignore other temp files
 *.db
 *.m3u8
+
+# Ignore python cache files
+__pycache__/
