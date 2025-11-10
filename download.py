@@ -148,37 +148,39 @@ def select_video_stream(playlist, target_resolution, base_url):
     return None, "No video streams available"
 
 
-def select_audio_track(playlist, target_language, base_url):
-    """Select the appropriate audio track based on language preference.
-    Returns (audio_track, error_message). If error_message is not None, selection failed.
-    """
+def select_audio_track(playlist, target_language, base_url, descriptive_audio=False):
+    """Select the appropriate audio track based on language preference and descriptive audio flag."""
     if not playlist or not playlist.media:
         return None, "No media groups available in playlist"
-    
     audio_media = [m for m in playlist.media if m.type == 'AUDIO']
     if not audio_media:
         return None, "No audio tracks available"
-    
-    if target_language:
-        # Try to find exact language match
-        for audio in audio_media:
-            if audio.language and audio.language.lower() == target_language.lower():
-                return audio, None
-        # Try to find partial match (e.g., 'en' matches 'en-US')
-        for audio in audio_media:
-            if audio.language and audio.language.lower().startswith(target_language.lower()):
-                return audio, None
-        
-        # Language not found - list available languages
-        available = []
-        for audio in audio_media:
-            if audio.language:
-                available.append(audio.language)
-        available_str = ", ".join(set(available)) if available else "none"
-        return None, f"No audio track found with language '{target_language}'. Available languages: {available_str}"
-    
-    # Default: return first audio track
-    return audio_media[0], None
+    lang_base = target_language.lower().replace('audio', '').replace('description', '').strip()
+    # Find all matching language tracks
+    candidates = [a for a in audio_media if a.language and a.language.lower() == lang_base]
+    if candidates:
+        if descriptive_audio:
+            filtered = [a for a in candidates if a.name and 'description' in a.name.lower()]
+            if filtered:
+                return filtered[0], None
+        filtered = [a for a in candidates if not (a.name and 'description' in a.name.lower())]
+        if filtered:
+            return filtered[0], None
+        return candidates[0], None
+    # Partial match
+    candidates = [a for a in audio_media if a.language and a.language.lower().startswith(lang_base)]
+    if candidates:
+        if descriptive_audio:
+            filtered = [a for a in candidates if a.name and 'description' in a.name.lower()]
+            if filtered:
+                return filtered[0], None
+        filtered = [a for a in candidates if not (a.name and 'description' in a.name.lower())]
+        if filtered:
+            return filtered[0], None
+        return candidates[0], None
+    available = [a.language for a in audio_media if a.language]
+    available_str = ", ".join(set(available)) if available else "none"
+    return None, f"No audio track found with language '{target_language}'. Available languages: {available_str}"
 
 
 def select_subtitle_track(playlist, target_language, base_url):
@@ -489,6 +491,11 @@ def parse_args():
         action='store_true',
         help='Show what would be downloaded and check URL validity, but do not download or merge.'
     )
+    parser.add_argument(
+        '--descriptive-audio',
+        action='store_true',
+        help='Select descriptive audio tracks (Audio Description) when available.'
+    )
     args = parser.parse_args()
     args.audio_languages = [lang.strip() for lang in args.audio_language.split(',') if lang.strip()]
     args.subtitle_languages = [lang.strip() for lang in args.subtitle_language.split(',') if lang.strip()]
@@ -557,7 +564,7 @@ def main():
                 selected_audios = []
                 audio_errors = []
                 for lang in args.audio_languages:
-                    audio, error = select_audio_track(playlist, lang, base_url)
+                    audio, error = select_audio_track(playlist, lang, base_url, descriptive_audio=args.descriptive_audio)
                     if audio:
                         selected_audios.append(audio)
                     else:
