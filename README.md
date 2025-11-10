@@ -18,18 +18,30 @@ Version 2.0 of this project simplifies the process by having just one script to 
    - The default input file is `urls.csv`. It should contain columns: `url`, `season`, `episode`, `title`.
 
 3. **Run the script**
-   - Basic usage:
-     ```bash
-     python3 download.py
-     ```
-   - For a dry run (shows what would be downloaded, checks URLs):
-     ```bash
-     python3 download.py --dry-run
-     ```
-   - To specify options (see `python3 download.py --help` for all options):
-     ```bash
-     python3 download.py -s 1,2 -a en --subtitle-language en -v 1080p -f mkv -o downloads/
-     ```
+    - Basic usage:
+       ```bash
+       python3 download.py
+       ```
+    - For a dry run (shows what would be downloaded, checks URLs):
+       ```bash
+       python3 download.py --dry-run
+       ```
+    - To specify options (see `python3 download.py --help` for all options):
+       ```bash
+       python3 download.py -s 1,2 -a en,es --subtitle-language en,es -v 1080p -f mkv -o downloads/
+       ```
+
+    - **Multi-audio and subtitle selection:**
+       - You can specify multiple audio or subtitle languages using a comma-separated list (e.g., `-a en,es --subtitle-language en,es`).
+       - If you select more than one audio or subtitle track, it is recommended to use `-f mkv` for proper multi-track playback.
+
+    - **Descriptive audio flag:**
+       - By default, the script will select the standard audio track for a language (e.g., English) and avoid tracks labeled as "Audio Description".
+       - To select descriptive audio tracks ("Audio Description") when available, use the `--descriptive-audio` flag:
+          ```bash
+          python3 download.py -a en --descriptive-audio
+          ```
+       - If both standard and descriptive tracks exist, the flag ensures the descriptive track is chosen.
 
 4. **Viewer Token**
    - If you encounter a 403 Forbidden error, the script will create a file called `viewer-token.txt` in the project directory.
