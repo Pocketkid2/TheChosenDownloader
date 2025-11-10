@@ -1,11 +1,3 @@
-def log_print(*args, **kwargs):
-    message = ' '.join(str(arg) for arg in args)
-    print(message, **kwargs)
-    try:
-        with open('output.log', 'a', encoding='utf-8') as f:
-            f.write(message + '\n')
-    except Exception:
-        pass
 #!/usr/bin/env python3
 """
 Script to read URLs from CSV, parse m3u8 files, and download/combine
@@ -19,11 +11,20 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import requests
 import m3u8
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
+
+
+def log_print(*args, **kwargs):
+    message = ' '.join(str(arg) for arg in args)
+    print(message, **kwargs)
+    try:
+        with open('output.log', 'a', encoding='utf-8') as f:
+            f.write(message + '\n')
+    except Exception:
+        pass
 
 
 def parse_m3u8(url):
@@ -215,7 +216,7 @@ def select_subtitle_track(playlist, target_language, base_url):
     return None, "No subtitle tracks available"
 
 
-def print_selected_tracks(selected_video, selected_audio, selected_subtitle, base_url, log_func=print):
+def print_selected_tracks(selected_video, selected_audios, selected_subtitles, base_url, log_func=print):
     """Print only the selected video, audio, and subtitle tracks."""
     log_func("\n  Selected Tracks:")
 
@@ -239,31 +240,33 @@ def print_selected_tracks(selected_video, selected_audio, selected_subtitle, bas
     else:
         log_func("    None")
 
-    # Print selected audio track
-    log_func("\n  Audio Track:")
-    if selected_audio:
-        name = selected_audio.name if selected_audio.name else "Unknown"
-        language = selected_audio.language if selected_audio.language else "Unknown"
-        uri = urljoin(base_url, selected_audio.uri) if selected_audio.uri else "N/A"
-        group_id = selected_audio.group_id if selected_audio.group_id else "N/A"
-        log_func(f"    Language Name: {name}")
-        log_func(f"    Language Code: {language}")
-        if selected_audio.uri:
-            log_func(f"    URI: {uri}")
+    # Print selected audio tracks
+    log_func("\n  Audio Tracks:")
+    if selected_audios:
+        for audio in selected_audios:
+            name = audio.name if audio.name else "Unknown"
+            language = audio.language if audio.language else "Unknown"
+            uri = urljoin(base_url, audio.uri) if audio.uri else "N/A"
+            group_id = audio.group_id if audio.group_id else "N/A"
+            log_func(f"    Language Name: {name}")
+            log_func(f"    Language Code: {language}")
+            if audio.uri:
+                log_func(f"    URI: {uri}")
     else:
         log_func("    None")
 
-    # Print selected subtitle track
-    log_func("\n  Subtitle Track:")
-    if selected_subtitle:
-        name = selected_subtitle.name if selected_subtitle.name else "Unknown"
-        language = selected_subtitle.language if selected_subtitle.language else "Unknown"
-        uri = urljoin(base_url, selected_subtitle.uri) if selected_subtitle.uri else "N/A"
-        group_id = selected_subtitle.group_id if selected_subtitle.group_id else "N/A"
-        log_func(f"    Language Name: {name}")
-        log_func(f"    Language Code: {language}")
-        if selected_subtitle.uri:
-            log_func(f"    URI: {uri}")
+    # Print selected subtitle tracks
+    log_func("\n  Subtitle Tracks:")
+    if selected_subtitles:
+        for subtitle in selected_subtitles:
+            name = subtitle.name if subtitle.name else "Unknown"
+            language = subtitle.language if subtitle.language else "Unknown"
+            uri = urljoin(base_url, subtitle.uri) if subtitle.uri else "N/A"
+            group_id = subtitle.group_id if subtitle.group_id else "N/A"
+            log_func(f"    Language Name: {name}")
+            log_func(f"    Language Code: {language}")
+            if subtitle.uri:
+                log_func(f"    URI: {uri}")
     else:
         log_func("    None")
 
@@ -434,47 +437,40 @@ def parse_seasons(season_arg):
 def parse_args():
     """Parse command line arguments."""
     default_language = get_default_language()
-    
     parser = argparse.ArgumentParser(
         description='Download and parse m3u8 files from CSV to display available streams',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    
     parser.add_argument(
         '-i', '--input',
         type=str,
         default='urls.csv',
         help='Input CSV file name (default: urls.csv)'
     )
-    
     parser.add_argument(
         '-s', '--season',
         type=parse_seasons,
         default=None,
         help='Season number(s) as integer or comma-separated list (e.g., "1" or "1,2,3"). Defaults to all seasons.'
     )
-    
     parser.add_argument(
         '-a', '--audio-language',
         type=str,
         default=default_language,
-        help=f'Audio language code (default: {default_language} from system locale)'
+        help=f'Audio language code(s), comma-separated (default: {default_language} from system locale)'
     )
-    
     parser.add_argument(
         '--subtitle-language',
         type=str,
         default=default_language,
-        help=f'Subtitle language code (default: {default_language} from system locale)'
+        help=f'Subtitle language code(s), comma-separated (default: {default_language} from system locale)'
     )
-    
     parser.add_argument(
         '-v', '--video-stream',
         type=str,
         default=None,
         help='Video resolution preference (e.g., "720p", "1080p"). Defaults to highest available resolution.'
     )
-    
     parser.add_argument(
         '-f', '--format',
         type=str,
@@ -482,21 +478,21 @@ def parse_args():
         default='mp4',
         help='Output video format (default: mp4)'
     )
-    
     parser.add_argument(
         '-o', '--output-dir',
         type=str,
         default='.',
         help='Output directory for downloaded files (default: current directory)'
     )
-
     parser.add_argument(
         '--dry-run',
         action='store_true',
         help='Show what would be downloaded and check URL validity, but do not download or merge.'
     )
-
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.audio_languages = [lang.strip() for lang in args.audio_language.split(',') if lang.strip()]
+    args.subtitle_languages = [lang.strip() for lang in args.subtitle_language.split(',') if lang.strip()]
+    return args
 
 
 def main():
@@ -558,36 +554,47 @@ def main():
 
                 # Select streams based on preferences
                 selected_video, video_error = select_video_stream(playlist, args.video_stream, base_url)
-                selected_audio, audio_error = select_audio_track(playlist, args.audio_language, base_url)
-                selected_subtitle, subtitle_error = select_subtitle_track(playlist, args.subtitle_language, base_url)
-
-                # Print warnings for missing tracks in dry-run mode
+                selected_audios = []
+                audio_errors = []
+                for lang in args.audio_languages:
+                    audio, error = select_audio_track(playlist, lang, base_url)
+                    if audio:
+                        selected_audios.append(audio)
+                    else:
+                        audio_errors.append(f"{lang}: {error}")
+                selected_subtitles = []
+                subtitle_errors = []
+                for lang in args.subtitle_languages:
+                    subtitle, error = select_subtitle_track(playlist, lang, base_url)
+                    if subtitle:
+                        selected_subtitles.append(subtitle)
+                    else:
+                        subtitle_errors.append(f"{lang}: {error}")
+                if (len(selected_audios) > 1 or len(selected_subtitles) > 1) and args.format != 'mkv':
+                    log_print("Warning: Multiple audio or subtitle tracks selected. MKV is recommended for proper multi-track playback.")
                 if args.dry_run:
                     if video_error:
                         log_print(f"Warning: {video_error}")
-                    if audio_error:
-                        log_print(f"Warning: {audio_error}")
-                    if subtitle_error:
-                        log_print(f"Warning: {subtitle_error}")
+                    for err in audio_errors:
+                        log_print(f"Warning: Audio track: {err}")
+                    for err in subtitle_errors:
+                        log_print(f"Warning: Subtitle track: {err}")
                 else:
                     if video_error:
                         log_print(f"Error: {video_error}")
                         sys.exit(1)
-                    if audio_error:
-                        log_print(f"Error: {audio_error}")
+                    if audio_errors:
+                        for err in audio_errors:
+                            log_print(f"Error: Audio track: {err}")
                         sys.exit(1)
-                    if subtitle_error:
-                        log_print(f"Error: {subtitle_error}")
+                    if subtitle_errors:
+                        for err in subtitle_errors:
+                            log_print(f"Error: Subtitle track: {err}")
                         sys.exit(1)
-
-                # Print only selected tracks
-                print_selected_tracks(selected_video, selected_audio, selected_subtitle, base_url, log_func=log_print)
-
-                # DRY RUN MODE
+                print_selected_tracks(selected_video, selected_audios, selected_subtitles, base_url, log_func=log_print)
                 if args.dry_run:
                     log_print("\n  DRY RUN: Showing URLs and checking validity...")
                     urls_to_check = []
-                    # Video
                     if selected_video and not video_error:
                         if hasattr(selected_video, 'uri'):
                             video_playlist_url = urljoin(base_url, selected_video.uri)
@@ -598,17 +605,16 @@ def main():
                         if video_playlist_url:
                             log_print(f"  Would download video: {video_playlist_url}")
                             urls_to_check.append(video_playlist_url)
-                    # Audio
-                    if selected_audio and selected_audio.uri and not audio_error:
-                        audio_playlist_url = urljoin(base_url, selected_audio.uri)
-                        log_print(f"  Would download audio: {audio_playlist_url}")
-                        urls_to_check.append(audio_playlist_url)
-                    # Subtitle
-                    if selected_subtitle and selected_subtitle.uri and not subtitle_error:
-                        subtitle_url = urljoin(base_url, selected_subtitle.uri)
-                        log_print(f"  Would download subtitle: {subtitle_url}")
-                        urls_to_check.append(subtitle_url)
-                    # Check all URLs
+                    for audio in selected_audios:
+                        if audio.uri:
+                            audio_playlist_url = urljoin(base_url, audio.uri)
+                            log_print(f"  Would download audio: {audio_playlist_url}")
+                            urls_to_check.append(audio_playlist_url)
+                    for subtitle in selected_subtitles:
+                        if subtitle.uri:
+                            subtitle_url = urljoin(base_url, subtitle.uri)
+                            log_print(f"  Would download subtitle: {subtitle_url}")
+                            urls_to_check.append(subtitle_url)
                     for check_url in urls_to_check:
                         try:
                             resp = requests.head(check_url, timeout=10)
@@ -620,7 +626,6 @@ def main():
                             log_print(f"    ✗ {check_url} error: {e}")
                     log_print("  DRY RUN complete. No files downloaded or merged.")
                     continue
-
                 # ...existing code for download and merge...
 
     except FileNotFoundError:
