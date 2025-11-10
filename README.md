@@ -4,6 +4,8 @@ This project contains the tools to download all episodes of [The Chosen (TV show
 
 Version 2.0 of this project simplifies the process by having just one script to do all the work.
 
+Unfortunately, The Chosen still keeps their latest season "under lock and key" which in this case means that to download Season 5 you need to obtain a viewer token from the official site to gain access to the downloads. Instructions for that are below.
+
 ## Usage Instructions
 
 1. **Install dependencies**
