@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import requests
 import m3u8
 from pathlib import Path
@@ -346,8 +347,16 @@ def download_subtitle(subtitle_uri, base_url, temp_dir):
         return None, f"Error downloading subtitle: {e}"
 
 
-def combine_with_ffmpeg(video_file, audio_file, subtitle_file, output_file, output_format='mp4'):
-    """Use ffmpeg to combine video, audio, and subtitle into final output file."""
+def combine_with_ffmpeg(video_file, audio_files, subtitle_files, output_file, output_format='mp4'):
+    """Use ffmpeg to combine video, audio, and subtitle into final output file.
+    
+    Args:
+        video_file: Path to video file
+        audio_files: List of paths to audio files (can be empty)
+        subtitle_files: List of paths to subtitle files (can be empty)
+        output_file: Path to output file
+        output_format: 'mp4' or 'mkv'
+    """
     try:
         # Check if ffmpeg is available
         if not shutil.which('ffmpeg'):
@@ -356,52 +365,63 @@ def combine_with_ffmpeg(video_file, audio_file, subtitle_file, output_file, outp
         if not video_file or not os.path.exists(video_file):
             return False, "Video file not found"
         
+        # Normalize inputs to lists
+        if not isinstance(audio_files, list):
+            audio_files = [audio_files] if audio_files else []
+        if not isinstance(subtitle_files, list):
+            subtitle_files = [subtitle_files] if subtitle_files else []
+        
+        # Filter out None and non-existent files
+        audio_files = [f for f in audio_files if f and os.path.exists(f)]
+        subtitle_files = [f for f in subtitle_files if f and os.path.exists(f)]
+        
         # Build ffmpeg command
         cmd = ['ffmpeg', '-y', '-loglevel', 'error']
         
         # Track input indices
         input_idx = 0
-        video_idx = None
-        audio_idx = None
-        subtitle_idx = None
+        video_idx = 0
         
         # Add video input
         cmd.extend(['-i', video_file])
-        video_idx = input_idx
         input_idx += 1
         
-        # Add audio input if separate
-        if audio_file and os.path.exists(audio_file):
+        # Add audio inputs
+        audio_indices = []
+        for audio_file in audio_files:
             cmd.extend(['-i', audio_file])
-            audio_idx = input_idx
+            audio_indices.append(input_idx)
             input_idx += 1
         
-        # Add subtitle input
-        if subtitle_file and os.path.exists(subtitle_file):
+        # Add subtitle inputs
+        subtitle_indices = []
+        for subtitle_file in subtitle_files:
             cmd.extend(['-i', subtitle_file])
-            subtitle_idx = input_idx
+            subtitle_indices.append(input_idx)
             input_idx += 1
         
         # Map streams
-        # Map all streams from video (will include video and any embedded audio)
-        cmd.extend(['-map', f'{video_idx}'])
+        # Map video
+        cmd.extend(['-map', f'{video_idx}:v:0'])
         
-        # If we have separate audio, override with that
-        if audio_idx is not None:
-            # Remove the auto-mapped audio and use separate audio instead
-            cmd.extend(['-map', '-0:a'])  # Remove auto-mapped audio
-            cmd.extend(['-map', f'{audio_idx}:a:0'])  # Use separate audio
+        # Map audio - prefer separate audio tracks, otherwise try video's embedded audio
+        if audio_indices:
+            for audio_idx in audio_indices:
+                cmd.extend(['-map', f'{audio_idx}:a:0'])
+        else:
+            # Try to map audio from video (may not exist)
+            cmd.extend(['-map', f'{video_idx}:a?'])
         
-        # Map subtitle if available
-        if subtitle_idx is not None:
-            cmd.extend(['-map', f'{subtitle_idx}:s:0'])  # Subtitle from subtitle input
+        # Map subtitles
+        for subtitle_idx in subtitle_indices:
+            cmd.extend(['-map', f'{subtitle_idx}:s:0'])
         
         # Codec settings
         cmd.extend(['-c:v', 'copy'])  # Copy video codec
         cmd.extend(['-c:a', 'copy'])  # Copy audio codec
         
         # Subtitle codec based on format
-        if subtitle_idx is not None:
+        if subtitle_indices:
             if output_format == 'mp4':
                 cmd.extend(['-c:s', 'mov_text'])  # MP4 uses mov_text for subtitles
             else:  # mkv
@@ -633,7 +653,72 @@ def main():
                             log_print(f"    ✗ {check_url} error: {e}")
                     log_print("  DRY RUN complete. No files downloaded or merged.")
                     continue
-                # ...existing code for download and merge...
+                
+                # Download and combine streams
+                log_print("\n  Downloading and combining streams...")
+                
+                # Create output directory if it doesn't exist
+                output_dir = Path(args.output_dir)
+                output_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Generate output filename
+                safe_title = sanitize_filename(title)
+                output_filename = f"S{season:02d}E{episode:02d} - {safe_title}.{args.format}"
+                output_file = output_dir / output_filename
+                
+                # Create temporary directory for downloads
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    video_file = None
+                    audio_files = []
+                    subtitle_files = []
+                    
+                    # Download video stream
+                    if selected_video:
+                        if hasattr(selected_video, 'uri'):
+                            # Variant stream - need to get the playlist URL
+                            video_playlist_url = urljoin(base_url, selected_video.uri)
+                            log_print("  Downloading video stream...")
+                            video_file, error = download_segments(video_playlist_url, base_url, temp_dir, "video")
+                            if error:
+                                log_print(f"Error: {error}")
+                                sys.exit(1)
+                        elif hasattr(selected_video, 'segments'):
+                            # Media playlist - use the original URL
+                            log_print("  Downloading video stream...")
+                            video_file, error = download_segments(url, base_url, temp_dir, "video")
+                            if error:
+                                log_print(f"Error: {error}")
+                                sys.exit(1)
+                    
+                    # Download audio streams
+                    for i, audio in enumerate(selected_audios):
+                        if audio.uri:
+                            audio_playlist_url = urljoin(base_url, audio.uri)
+                            log_print(f"  Downloading audio stream {i+1}/{len(selected_audios)}...")
+                            audio_file, error = download_segments(audio_playlist_url, base_url, temp_dir, f"audio_{i}")
+                            if error:
+                                log_print(f"Error: {error}")
+                                sys.exit(1)
+                            audio_files.append(audio_file)
+                    
+                    # Download subtitles
+                    for i, subtitle in enumerate(selected_subtitles):
+                        if subtitle.uri:
+                            log_print(f"  Downloading subtitle {i+1}/{len(selected_subtitles)}...")
+                            subtitle_file, error = download_subtitle(subtitle.uri, base_url, temp_dir)
+                            if error:
+                                log_print(f"Warning: {error}")
+                            else:
+                                subtitle_files.append(subtitle_file)
+                    
+                    # Combine with ffmpeg
+                    log_print("  Combining streams with ffmpeg...")
+                    success, error = combine_with_ffmpeg(video_file, audio_files, subtitle_files, str(output_file), args.format)
+                    if not success:
+                        log_print(f"Error: {error}")
+                        sys.exit(1)
+                    
+                    log_print(f"\n  ✓ Successfully created: {output_file}")
 
     except FileNotFoundError:
         log_print(f"Error: Could not find {csv_file}")
