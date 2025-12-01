@@ -456,6 +456,20 @@ def parse_seasons(season_arg):
         raise argparse.ArgumentTypeError("Seasons must be integers or comma-separated integers (e.g., '1,2,3')")
 
 
+def parse_episodes(episode_arg):
+    """Parse episode argument which can be a single integer or comma-separated list."""
+    if not episode_arg or not episode_arg.strip():
+        raise argparse.ArgumentTypeError("Episode argument cannot be empty")
+    
+    try:
+        episodes = [int(e.strip()) for e in episode_arg.split(',') if e.strip()]
+        if not episodes:
+            raise argparse.ArgumentTypeError("At least one episode number must be provided")
+        return set(episodes)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError("Episodes must be integers or comma-separated integers (e.g., '1,2,3')")
+
+
 def parse_args():
     """Parse command line arguments."""
     default_language = get_default_language()
@@ -474,6 +488,12 @@ def parse_args():
         type=parse_seasons,
         default=None,
         help='Season number(s) as integer or comma-separated list (e.g., "1" or "1,2,3"). Defaults to all seasons.'
+    )
+    parser.add_argument(
+        '-e', '--episode',
+        type=parse_episodes,
+        default=None,
+        help='Episode number(s) as integer or comma-separated list (e.g., "1" or "1,2,3"). Defaults to all episodes.'
     )
     parser.add_argument(
         '-a', '--audio-language',
@@ -517,6 +537,10 @@ def parse_args():
         help='Select descriptive audio tracks (Audio Description) when available.'
     )
     args = parser.parse_args()
+    
+    if args.episode and not args.season:
+        parser.error("-e/--episode requires -s/--season to be specified.")
+
     args.audio_languages = [lang.strip() for lang in args.audio_language.split(',') if lang.strip()]
     args.subtitle_languages = [lang.strip() for lang in args.subtitle_language.split(',') if lang.strip()]
     return args
@@ -546,6 +570,10 @@ def main():
 
                 # Filter by season if specified
                 if args.season and season not in args.season:
+                    continue
+
+                # Filter by episode if specified
+                if args.episode and episode not in args.episode:
                     continue
 
                 log_print(f"\n{'='*80}")
