@@ -457,18 +457,18 @@ def combine_with_ffmpeg(video_file, audio_files, subtitle_files, output_file, ou
         return False, f"Error running ffmpeg: {e}"
 
 
-def parse_seasons(season_arg):
-    """Parse season argument which can be a single integer or comma-separated list."""
-    if not season_arg or not season_arg.strip():
-        raise argparse.ArgumentTypeError("Season argument cannot be empty")
+def parse_int_list(value):
+    """Parse argument which can be a single integer or comma-separated list."""
+    if not value or not value.strip():
+        raise argparse.ArgumentTypeError("Argument cannot be empty")
     
     try:
-        seasons = [int(s.strip()) for s in season_arg.split(',') if s.strip()]
-        if not seasons:
-            raise argparse.ArgumentTypeError("At least one season number must be provided")
-        return set(seasons)
-    except ValueError as e:
-        raise argparse.ArgumentTypeError("Seasons must be integers or comma-separated integers (e.g., '1,2,3')")
+        items = [int(s.strip()) for s in value.split(',') if s.strip()]
+        if not items:
+            raise argparse.ArgumentTypeError("At least one number must be provided")
+        return set(items)
+    except ValueError:
+        raise argparse.ArgumentTypeError("Values must be integers or comma-separated integers (e.g., '1,2,3')")
 
 
 def parse_args():
@@ -486,9 +486,15 @@ def parse_args():
     )
     parser.add_argument(
         '-s', '--season',
-        type=parse_seasons,
+        type=parse_int_list,
         default=None,
         help='Season number(s) as integer or comma-separated list (e.g., "1" or "1,2,3"). Defaults to all seasons.'
+    )
+    parser.add_argument(
+        '-e', '--episode',
+        type=parse_int_list,
+        default=None,
+        help='Episode number(s) as integer or comma-separated list (e.g., "1" or "1,2,3"). Defaults to all episodes.'
     )
     parser.add_argument(
         '-a', '--audio-language',
@@ -518,8 +524,8 @@ def parse_args():
     parser.add_argument(
         '-o', '--output-dir',
         type=str,
-        default='.',
-        help='Output directory for downloaded files (default: current directory)'
+        default='downloads',
+        help='Output directory for downloaded files (default: downloads)'
     )
     parser.add_argument(
         '--dry-run',
@@ -566,6 +572,10 @@ def main():
 
                 # Filter by season if specified
                 if args.season and season not in args.season:
+                    continue
+
+                # Filter by episode if specified
+                if args.episode and episode not in args.episode:
                     continue
 
                 log_print(f"\n{'='*80}")
@@ -683,7 +693,8 @@ def main():
                 
                 # Generate output filename
                 safe_title = sanitize_filename(title)
-                output_filename = f"S{season:02d}E{episode:02d} - {safe_title}.{args.format}"
+                codec = "h265" if args.h265 else "h264"
+                output_filename = f"[TheChosen] [S{season:02d}E{episode:02d}] {safe_title} ({codec}).{args.format}"
                 output_file = output_dir / output_filename
                 
                 # Create temporary directory for downloads
