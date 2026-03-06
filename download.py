@@ -322,7 +322,7 @@ def download_segments(playlist_url, base_url, temp_dir, stream_type="video"):
         return None, f"Error downloading {stream_type} with yt-dlp: {e}"
 
 
-def download_subtitle(subtitle_uri, base_url, temp_dir):
+def download_subtitle(subtitle_uri, base_url, temp_dir, subtitle_index=0):
     """Download subtitle file and return the path."""
     try:
         subtitle_url = urljoin(base_url, subtitle_uri)
@@ -344,7 +344,7 @@ def download_subtitle(subtitle_uri, base_url, temp_dir):
                     f.write(seg_response.content)
                 segment_files.append(seg_file)
             # Concatenate segments into one subtitle file
-            subtitle_file = os.path.join(temp_dir, "subtitle.vtt")
+            subtitle_file = os.path.join(temp_dir, f"subtitle_{subtitle_index}.vtt")
             with open(subtitle_file, 'wb') as outfile:
                 for seg_file in segment_files:
                     with open(seg_file, 'rb') as infile:
@@ -471,6 +471,20 @@ def parse_int_list(value):
         raise argparse.ArgumentTypeError("Values must be integers or comma-separated integers (e.g., '1,2,3')")
 
 
+def parse_episodes(episode_arg):
+    """Parse episode argument which can be a single integer or comma-separated list."""
+    if not episode_arg or not episode_arg.strip():
+        raise argparse.ArgumentTypeError("Episode argument cannot be empty")
+    
+    try:
+        episodes = [int(e.strip()) for e in episode_arg.split(',') if e.strip()]
+        if not episodes:
+            raise argparse.ArgumentTypeError("At least one episode number must be provided")
+        return set(episodes)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError("Episodes must be integers or comma-separated integers (e.g., '1,2,3')")
+
+
 def parse_args():
     """Parse command line arguments."""
     default_language = get_default_language()
@@ -543,6 +557,10 @@ def parse_args():
         help='Prefer h265/HEVC video streams over h264/AVC.'
     )
     args = parser.parse_args()
+    
+    if args.episode and not args.season:
+        parser.error("-e/--episode requires -s/--season to be specified.")
+
     args.audio_languages = [lang.strip() for lang in args.audio_language.split(',') if lang.strip()]
     args.subtitle_languages = [lang.strip() for lang in args.subtitle_language.split(',') if lang.strip()]
     return args
@@ -736,7 +754,7 @@ def main():
                     for i, subtitle in enumerate(selected_subtitles):
                         if subtitle.uri:
                             log_print(f"  Downloading subtitle {i+1}/{len(selected_subtitles)}...")
-                            subtitle_file, error = download_subtitle(subtitle.uri, base_url, temp_dir)
+                            subtitle_file, error = download_subtitle(subtitle.uri, base_url, temp_dir, i)
                             if error:
                                 log_print(f"Warning: {error}")
                             else:

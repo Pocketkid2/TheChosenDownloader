@@ -32,6 +32,10 @@ Unfortunately, The Chosen still keeps their latest season "under lock and key" w
        ```bash
        python3 download.py -s 1,2 -a en,es --subtitle-language en,es -v 1080p -f mkv -o downloads/
        ```
+    - To filter by specific episodes (requires season to be specified):
+       ```bash
+       python3 download.py -s 1 -e 1,2,3
+       ```
 
     - **Multi-audio and subtitle selection:**
        - You can specify multiple audio or subtitle languages using a comma-separated list (e.g., `-a en,es --subtitle-language en,es`).
