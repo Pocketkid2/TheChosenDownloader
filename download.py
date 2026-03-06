@@ -96,8 +96,8 @@ def parse_resolution(resolution_str):
     return None
 
 
-def select_video_stream(playlist, target_resolution, base_url):
-    """Select the appropriate video stream based on resolution preference.
+def select_video_stream(playlist, target_resolution, base_url, prefer_h265=False):
+    """Select the appropriate video stream based on resolution and codec preference.
     Returns (variant, error_message). If error_message is not None, selection failed.
     """
     if not playlist:
@@ -109,40 +109,55 @@ def select_video_stream(playlist, target_resolution, base_url):
             return None, f"No variant streams available (single stream playlist), cannot match resolution {target_resolution}"
         return playlist, None
     
+    # Filter variants based on codec preference
+    codec_tag = "hvc1" if prefer_h265 else "avc1"
+    url_tag = "h265" if prefer_h265 else "h264"
+    
+    target_variants = []
+    for variant in playlist.playlists:
+        codecs = (variant.stream_info.codecs or "").lower()
+        uri = (variant.uri or "").lower()
+        if codec_tag in codecs or url_tag in uri:
+            target_variants.append(variant)
+            
+    # If no variants match the preferred codec, fall back to all variants
+    if not target_variants:
+        target_variants = playlist.playlists
+    
     if target_resolution:
         target_height = parse_resolution(target_resolution)
         if not target_height:
             return None, f"Invalid resolution format: {target_resolution}. Expected format like '720p' or '1080p'"
         
-        # Find stream matching the target resolution
-        for variant in playlist.playlists:
+        # Find stream matching the target resolution within the filtered variants
+        for variant in target_variants:
             if variant.stream_info.resolution:
                 height = variant.stream_info.resolution[1]
                 if height == target_height:
                     return variant, None
         
-        # Resolution not found - list available resolutions
+        # Resolution not found - list available resolutions in the filtered variants
         available = []
-        for variant in playlist.playlists:
+        for variant in target_variants:
             if variant.stream_info.resolution:
                 height = variant.stream_info.resolution[1]
                 available.append(f"{height}p")
         available_str = ", ".join(available) if available else "none"
         return None, f"No video stream found with resolution {target_resolution}. Available resolutions: {available_str}"
     
-    # Default: return the stream with the highest resolution
+    # Default: return the stream with the highest resolution from filtered variants
     best_variant = None
     max_resolution = 0
     
-    for variant in playlist.playlists:
+    for variant in target_variants:
         if variant.stream_info.resolution:
             height = variant.stream_info.resolution[1]
             if height > max_resolution:
                 max_resolution = height
                 best_variant = variant
     
-    if not best_variant and playlist.playlists:
-        return playlist.playlists[0], None
+    if not best_variant and target_variants:
+        return target_variants[0], None
     
     if best_variant:
         return best_variant, None
@@ -516,6 +531,11 @@ def parse_args():
         action='store_true',
         help='Select descriptive audio tracks (Audio Description) when available.'
     )
+    parser.add_argument(
+        '--h265',
+        action='store_true',
+        help='Prefer h265/HEVC video streams over h264/AVC.'
+    )
     args = parser.parse_args()
     args.audio_languages = [lang.strip() for lang in args.audio_language.split(',') if lang.strip()]
     args.subtitle_languages = [lang.strip() for lang in args.subtitle_language.split(',') if lang.strip()]
@@ -580,7 +600,7 @@ def main():
                 base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{'/'.join(parsed_url.path.split('/')[:-1])}/"
 
                 # Select streams based on preferences
-                selected_video, video_error = select_video_stream(playlist, args.video_stream, base_url)
+                selected_video, video_error = select_video_stream(playlist, args.video_stream, base_url, prefer_h265=args.h265)
                 selected_audios = []
                 audio_errors = []
                 for lang in args.audio_languages:
