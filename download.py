@@ -307,7 +307,7 @@ def download_segments(playlist_url, base_url, temp_dir, stream_type="video"):
         return None, f"Error downloading {stream_type} with yt-dlp: {e}"
 
 
-def download_subtitle(subtitle_uri, base_url, temp_dir):
+def download_subtitle(subtitle_uri, base_url, temp_dir, subtitle_index=0):
     """Download subtitle file and return the path."""
     try:
         subtitle_url = urljoin(base_url, subtitle_uri)
@@ -329,7 +329,7 @@ def download_subtitle(subtitle_uri, base_url, temp_dir):
                     f.write(seg_response.content)
                 segment_files.append(seg_file)
             # Concatenate segments into one subtitle file
-            subtitle_file = os.path.join(temp_dir, "subtitle.vtt")
+            subtitle_file = os.path.join(temp_dir, f"subtitle_{subtitle_index}.vtt")
             with open(subtitle_file, 'wb') as outfile:
                 for seg_file in segment_files:
                     with open(seg_file, 'rb') as infile:
@@ -733,7 +733,7 @@ def main():
                     for i, subtitle in enumerate(selected_subtitles):
                         if subtitle.uri:
                             log_print(f"  Downloading subtitle {i+1}/{len(selected_subtitles)}...")
-                            subtitle_file, error = download_subtitle(subtitle.uri, base_url, temp_dir)
+                            subtitle_file, error = download_subtitle(subtitle.uri, base_url, temp_dir, i)
                             if error:
                                 log_print(f"Warning: {error}")
                             else:
