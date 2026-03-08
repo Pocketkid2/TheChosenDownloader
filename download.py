@@ -446,9 +446,9 @@ def combine_with_ffmpeg(video_file, audio_files, subtitle_files, output_file, ou
         
         # Metadata for audio and subtitle tracks
         for i, track_name in enumerate(audio_track_names):
-            cmd.extend([f'-metadata:s:a:{i}', f'title="{track_name}"'])
+            cmd.extend([f'-metadata:s:a:{i}', f'title={track_name}'])
         for i, track_name in enumerate(subtitle_track_names):
-            cmd.extend([f'-metadata:s:s:{i}', f'title="{track_name}"'])
+            cmd.extend([f'-metadata:s:s:{i}', f'title={track_name}'])
 
         # Output file
         cmd.append(output_file)
