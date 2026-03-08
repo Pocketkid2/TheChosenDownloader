@@ -362,7 +362,7 @@ def download_subtitle(subtitle_uri, base_url, temp_dir, subtitle_index=0):
         return None, f"Error downloading subtitle: {e}"
 
 
-def combine_with_ffmpeg(video_file, audio_files, subtitle_files, output_file, output_format='mp4'):
+def combine_with_ffmpeg(video_file, audio_files, subtitle_files, output_file, output_format='mp4', audio_track_names=[], subtitle_track_names=[]):
     """Use ffmpeg to combine video, audio, and subtitle into final output file.
     
     Args:
@@ -371,6 +371,8 @@ def combine_with_ffmpeg(video_file, audio_files, subtitle_files, output_file, ou
         subtitle_files: List of paths to subtitle files (can be empty)
         output_file: Path to output file
         output_format: 'mp4' or 'mkv'
+        audio_track_names: List of audio track names/titles (optional)
+        subtitle_track_names: List of subtitle track names/titles (optional)
     """
     try:
         # Check if ffmpeg is available
@@ -442,6 +444,12 @@ def combine_with_ffmpeg(video_file, audio_files, subtitle_files, output_file, ou
             else:  # mkv
                 cmd.extend(['-c:s', 'copy'])  # MKV can copy subtitle codec
         
+        # Metadata for audio and subtitle tracks
+        for i, track_name in enumerate(audio_track_names):
+            cmd.extend([f'-metadata:s:a:{i}', f'title={track_name}'])
+        for i, track_name in enumerate(subtitle_track_names):
+            cmd.extend([f'-metadata:s:s:{i}', f'title={track_name}'])
+
         # Output file
         cmd.append(output_file)
         
@@ -762,7 +770,7 @@ def main():
                     
                     # Combine with ffmpeg
                     log_print("  Combining streams with ffmpeg...")
-                    success, error = combine_with_ffmpeg(video_file, audio_files, subtitle_files, str(output_file), args.format)
+                    success, error = combine_with_ffmpeg(video_file, audio_files, subtitle_files, str(output_file), args.format, args.audio_languages, args.subtitle_languages)
                     if not success:
                         log_print(f"Error: {error}")
                         sys.exit(1)
